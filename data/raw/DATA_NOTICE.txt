@@ -1,0 +1,11 @@
+FundScope India dataset notice
+
+The bundled nav_history.csv contains synthetic test data generated solely to demonstrate the project pipeline. It is not actual mutual fund NAV or investment performance.
+
+A separate real-world dataset is available at real_nav_sbi_small_cap.csv. It contains historical NAV observations for SBI Small Cap Fund - Direct Plan - Growth, scheme code 125497, sourced from the MFapi.in API.
+
+Source URL: https://api.mfapi.in/mf/125497
+
+MFapi.in is a third-party data source, not the official AMFI website. Verify the source, scheme identity, latest available NAV, and permitted use before relying on the data for factual claims or investment analysis.
+
+The dashboard must identify which dataset is currently loaded. Do not label synthetic results as real fund performance.

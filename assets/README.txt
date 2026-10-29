@@ -1,0 +1,1 @@
+The `screenshots/` directory contains Playwright captures of the running application at 360, 768, 1024, and 1440 pixels wide. All records shown in these screenshots are synthetic test fixtures and are labelled in the UI.

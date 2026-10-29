@@ -1,0 +1,18 @@
+FUNDSCOPE INDIA - DATA QUALITY REPORT
+==========================================
+Selected dataset: Real mutual fund schemes (MFapi.in)
+Input file: real_nav_schemes.csv
+Source mode: real
+Source URL: https://api.mfapi.in/mf/{scheme_code}
+Note: MFapi.in is a third-party source, not the official AMFI website.
+
+input_rows: 42372
+clean_rows: 42372
+invalid_dates: 0
+invalid_or_missing_nav: 0
+duplicates_removed: 0
+schemes: 16
+start_date: 2013-01-01
+end_date: 2026-10-29
+
+Metrics use each scheme's full available history. For fair rankings, align date ranges and categories.

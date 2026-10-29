@@ -1,0 +1,13 @@
+{
+  "source_mode": "real",
+  "dataset_name": "Real mutual fund schemes (MFapi.in)",
+  "input_file": "data\\raw\\real_nav_schemes.csv",
+  "source_url": "https://api.mfapi.in/mf/{scheme_code}",
+  "source_type": "Third-party MFapi.in historical NAV data",
+  "generated_at_utc": "2026-10-29T20:44:16.673881+00:00",
+  "input_rows": 42372,
+  "clean_rows": 42372,
+  "schemes": 16,
+  "start_date": "2013-01-01",
+  "end_date": "2026-10-29"
+}

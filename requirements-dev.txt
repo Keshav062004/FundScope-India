@@ -1,0 +1,4 @@
+-r requirements.txt
+pandas-stubs>=2.0,<3.0
+ruff>=0.11
+mypy>=1.15
