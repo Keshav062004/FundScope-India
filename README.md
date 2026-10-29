@@ -1,7 +1,6 @@
 # FundScope India: Mutual Fund Performance & Risk Analytics
 
-To add a GitHub Actions status badge, publish this project and replace the
-owner/repository segment in the badge URL with its actual GitHub slug.
+[![CI](https://github.com/Keshav062004/FundScope-India/actions/workflows/ci.yml/badge.svg)](https://github.com/Keshav062004/FundScope-India/actions/workflows/ci.yml)
 
 An end-to-end analytics project for Indian mutual funds. It covers:
 
