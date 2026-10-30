@@ -216,17 +216,19 @@ The refresh fetches all configured schemes concurrently, validates the returned 
 |---|---|
 | `GET /api/data` | Metrics, NAV series, monthly returns, sourced findings, matched-date index comparisons, and dataset metadata |
 | `GET /api/status` | Dataset status and quality summary |
+| `GET /api/health` | Health check |
+| `GET /api/downloads/{filename}` | Allow-listed generated dataset reports and CSVs |
+| `GET /api/stocks/tickers`, `GET /api/stocks/history` | Stock ticker list and price history |
 | `POST /api/pipeline/run` | Re-run the pipeline |
 | `POST /api/pipeline/refresh-nav` | Fetch and merge the latest NAV |
 | `GET /api/mf/search`, `GET /api/mf/nav` | Look up Indian mutual fund schemes |
-| `GET /api/stocks/history` | Stock price history (via yfinance) |
+| `GET /api/lineage` | Dataset provenance |
 | `POST /api/portfolio/calculate` | Portfolio gain and loss |
 | `POST /api/ai/chat`, `GET /api/ai/insights` | AI analyst (Gemini, grounded on project data) |
-| `GET /api/health` | Health check |
 
 Generated files also include `rolling_returns.csv` and `calendar_year_returns.csv`; `fund_metrics.csv` includes Sharpe, Sortino, and Calmar ratios.
 
-All application data, AI, download, and account logout routes require a valid session cookie. Pipeline run and NAV refresh operations additionally require an email listed in `[auth].admin_emails`. `/api/auth/session` remains public and returns a null user when signed out; login, signup, reset, and Google OAuth routes are public, with the OAuth callback validating one-time state bound to a short-lived HttpOnly browser cookie.
+Read-only dataset, status, download, lookup, and health routes are public. Portfolio calculations, AI routes, and account logout require a valid session cookie. Pipeline run and NAV refresh operations additionally require an email listed in `[auth].admin_emails`. `/api/auth/session` remains public and returns a null user when signed out; login, signup, reset, and Google OAuth routes are public, with the OAuth callback validating one-time state bound to a short-lived HttpOnly browser cookie.
 
 ## Metric definitions
 

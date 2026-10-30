@@ -13,7 +13,7 @@ from backend import config, sessions
 from backend.auth_routes import _set_cookie
 from backend.main import app
 
-PROTECTED_REQUESTS = [
+PUBLIC_DATA_REQUESTS = [
     ("GET", "/api/data", None),
     ("GET", "/api/status", None),
     ("GET", "/api/downloads/fund_metrics.csv", None),
@@ -28,6 +28,9 @@ PROTECTED_REQUESTS = [
     ),
     ("GET", "/api/mf/search?q=fund", None),
     ("GET", "/api/mf/nav?code=125497", None),
+    ("GET", "/api/lineage", None),
+]
+PROTECTED_REQUESTS = [
     (
         "POST",
         "/api/portfolio/calculate",
@@ -43,7 +46,6 @@ PROTECTED_REQUESTS = [
             ]
         },
     ),
-    ("GET", "/api/lineage", None),
     ("POST", "/api/ai/ask", {"question": "Summarize the data"}),
     ("POST", "/api/ai/chat", {"messages": [{"role": "user", "content": "Hello"}]}),
     ("GET", "/api/ai/insights", None),
@@ -129,6 +131,13 @@ def expired_session():
 
 def _request(client: TestClient, method: str, url: str, body: dict | None = None):
     return client.request(method, url, json=body)
+
+
+@pytest.mark.parametrize("method,url,body", PUBLIC_DATA_REQUESTS)
+def test_public_data_routes_do_not_require_a_session(api_client, method, url, body):
+    response = _request(api_client, method, url, body)
+
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize("method,url,body", PROTECTED_REQUESTS + PIPELINE_REQUESTS)
@@ -357,22 +366,22 @@ PORTFOLIO_BODY = {
 }
 
 API_SUCCESS_CASES = [
-    ("GET", "/api/data", None, "user"),
-    ("GET", "/api/status", None, "user"),
+    ("GET", "/api/data", None, "public"),
+    ("GET", "/api/status", None, "public"),
     ("POST", "/api/pipeline/run", {"source": "demo"}, "admin"),
     ("POST", "/api/pipeline/refresh-nav", None, "admin"),
-    ("GET", "/api/downloads/fund_metrics.csv", None, "user"),
-    ("GET", "/api/stocks/tickers", None, "user"),
+    ("GET", "/api/downloads/fund_metrics.csv", None, "public"),
+    ("GET", "/api/stocks/tickers", None, "public"),
     (
         "GET",
         "/api/stocks/history?ticker=RELIANCE.NS&start=2026-01-01&end=2026-01-10",
         None,
-        "user",
+        "public",
     ),
-    ("GET", "/api/mf/search?q=fund", None, "user"),
-    ("GET", "/api/mf/nav?code=125497", None, "user"),
+    ("GET", "/api/mf/search?q=fund", None, "public"),
+    ("GET", "/api/mf/nav?code=125497", None, "public"),
     ("POST", "/api/portfolio/calculate", PORTFOLIO_BODY, "user"),
-    ("GET", "/api/lineage", None, "user"),
+    ("GET", "/api/lineage", None, "public"),
     ("POST", "/api/ai/ask", {"question": "Summarize the data"}, "user"),
     ("POST", "/api/ai/chat", {"messages": [{"role": "user", "content": "Hello"}]}, "user"),
     ("GET", "/api/ai/insights", None, "user"),
@@ -382,30 +391,30 @@ API_SUCCESS_CASES = [
 API_INVALID_INPUT_CASES = [
     ("POST", "/api/pipeline/run", {"source": "unknown"}, "admin", 422),
     ("POST", "/api/pipeline/run", None, "admin", 422),
-    ("GET", "/api/downloads/not-a-report.csv", None, "user", 404),
-    ("GET", "/api/stocks/history?start=2026-01-01&end=2026-01-10", None, "user", 422),
+    ("GET", "/api/downloads/not-a-report.csv", None, "public", 404),
+    ("GET", "/api/stocks/history?start=2026-01-01&end=2026-01-10", None, "public", 422),
     (
         "GET",
         "/api/stocks/history?ticker=TEST&start=not-a-date&end=2026-01-10",
         None,
-        "user",
+        "public",
         422,
     ),
     (
         "GET",
         "/api/stocks/history?ticker=TEST&start=2026-01-10&end=2026-01-01",
         None,
-        "user",
+        "public",
         422,
     ),
-    ("GET", f"/api/mf/search?q={'x' * 101}", None, "user", 422),
-    ("GET", "/api/mf/nav?code=not-a-scheme-code", None, "user", 422),
-    ("GET", "/api/mf/nav?code=125497&start=not-a-date", None, "user", 422),
+    ("GET", f"/api/mf/search?q={'x' * 101}", None, "public", 422),
+    ("GET", "/api/mf/nav?code=not-a-scheme-code", None, "public", 422),
+    ("GET", "/api/mf/nav?code=125497&start=not-a-date", None, "public", 422),
     (
         "GET",
         "/api/mf/nav?code=125497&start=2026-02-01&end=2026-01-01",
         None,
-        "user",
+        "public",
         422,
     ),
     (

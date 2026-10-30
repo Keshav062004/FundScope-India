@@ -49,7 +49,7 @@ app.include_router(auth_router)
 
 # ---------------------------------------------------------------- dataset --
 
-@app.get("/api/data", dependencies=[Depends(require_user)])
+@app.get("/api/data")
 def get_data():
     metrics = load_metrics()
     nav = load_nav()
@@ -75,7 +75,7 @@ def get_data():
     }
 
 
-@app.get("/api/status", dependencies=[Depends(require_user)])
+@app.get("/api/status")
 def get_status():
     raw_file = active_raw_file()
     raw = read_csv_safe(raw_file)
@@ -138,7 +138,7 @@ def refresh_nav_endpoint():
         raise HTTPException(500, f"Refresh error: {exc}")
 
 
-@app.get("/api/downloads/{filename}", dependencies=[Depends(require_user)])
+@app.get("/api/downloads/{filename}")
 def download_file(filename: str):
     from fastapi.responses import FileResponse
 
@@ -166,12 +166,12 @@ SYNTHETIC_TICKERS = [
 ]
 
 
-@app.get("/api/stocks/tickers", dependencies=[Depends(require_user)])
+@app.get("/api/stocks/tickers")
 def stock_tickers():
     return SYNTHETIC_TICKERS
 
 
-@app.get("/api/stocks/history", dependencies=[Depends(require_user)])
+@app.get("/api/stocks/history")
 def stock_history(
     ticker: str = Query(min_length=1),
     start: date = Query(),
@@ -212,7 +212,7 @@ def stock_history(
 
 # ------------------------------------------------------------- mutual funds --
 
-@app.get("/api/mf/search", dependencies=[Depends(require_user)])
+@app.get("/api/mf/search")
 def mf_search(q: str = Query(default="", max_length=100)):
     from src.data_sources.mutual_funds import search_mf_schemes
 
@@ -222,7 +222,7 @@ def mf_search(q: str = Query(default="", max_length=100)):
         raise HTTPException(400, str(exc))
 
 
-@app.get("/api/mf/nav", dependencies=[Depends(require_user)])
+@app.get("/api/mf/nav")
 def mf_nav(
     code: str = Query(min_length=1, pattern=r"^\d+$"),
     start: date | None = None,
@@ -284,7 +284,7 @@ def portfolio_calculate(body: PortfolioRequest):
 
 # ------------------------------------------------------------------ lineage --
 
-@app.get("/api/lineage", dependencies=[Depends(require_user)])
+@app.get("/api/lineage")
 def lineage():
     from src.utils.provenance import provenance_table
 
