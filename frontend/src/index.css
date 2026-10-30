@@ -110,6 +110,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .card:hover { border-color: var(--border-strong); }
 
@@ -225,12 +226,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   font-size: 0.84rem;
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-4);
-  transition: all .12s ease;
+  transition: transform .18s ease, box-shadow .18s ease, background-color .12s ease, border-color .12s ease;
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
 }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
 .btn-primary { background: var(--brand); color: var(--brand-contrast); box-shadow: 0 4px 14px rgba(54,185,151,.15); }
 .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--brand) 85%, white); }
 .btn-secondary { background: var(--surface); color: var(--text-primary); border-color: var(--border-strong); }
@@ -343,6 +345,13 @@ input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.8); }
   color: var(--text-primary) !important;
 }
 .mobile-dashboard-navigation { display: none; }
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
 
 @media (max-width: 768px) {
   .topnav-hamburger { display: flex !important; }

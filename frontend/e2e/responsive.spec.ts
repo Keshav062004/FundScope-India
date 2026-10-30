@@ -123,7 +123,12 @@ for (const width of widths) {
     for (const route of routes) {
       await page.goto(route.path);
       await expect(page.locator('main h1, main h2').first()).toBeVisible();
-      await expect(page.getByRole('note').first()).toBeVisible();
+      if (route.path === '/') {
+        await expect(page.getByRole('button', { name: 'Flip between bull and bear market illustrations' })).toBeVisible();
+        await expect(page.locator('.hero-market-flip__front img')).toHaveAttribute('alt', 'Bull market illustration');
+      } else {
+        await expect(page.getByRole('note').first()).toBeVisible();
+      }
 
       const dimensions = await page.evaluate(() => ({
         documentWidth: document.documentElement.scrollWidth,

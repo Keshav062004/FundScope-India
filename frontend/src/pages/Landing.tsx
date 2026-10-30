@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowDown, ArrowRight, BarChart3, Check, ChevronRight, Database,
-  LineChart, Menu, ShieldCheck, TrendingUp, Wallet, X,
+  LineChart, Menu, MessageCircle, ShieldCheck, Sparkles, TrendingUp, Wallet, X,
 } from 'lucide-react';
-import { api, fmtPct, type DatasetResponse } from '../api';
 import FAQ, { type FAQItem } from '../components/FAQ';
-import { EmptyState, ErrorState, LoadingState, SyntheticDataBanner } from '../components/DataState';
+import HeroMarketFlipCard from '../components/HeroMarketFlipCard';
 import MarketArt from '../components/MarketArt';
+import PortfolioShowcase from '../components/PortfolioShowcase';
+import { LANDING_STATS } from '../config/landingStats';
+import './Landing.css';
 
 const FEATURES = [
   { icon: BarChart3, title: 'Overview', text: 'Review historical risk and return measures calculated from the available NAV data.', to: '/app/overview' },
@@ -60,72 +62,87 @@ const TECH_STACK = ['FastAPI', 'React', 'TypeScript', 'SQLite', 'Power BI'];
 
 const CURRENT_YEAR = new Date().getFullYear();
 
+function DatasetScaleStats() {
+  const stats = [
+    { label: 'Tracked schemes', value: String(LANDING_STATS.trackedSchemes) },
+    { label: 'NAV data points', value: LANDING_STATS.navDataPoints.toLocaleString('en-IN') },
+    { label: 'Fund categories', value: String(LANDING_STATS.fundCategories) },
+    { label: 'Years of history', value: `${LANDING_STATS.yearsOfHistory}+` },
+  ];
+
+  return (
+    <section aria-label="Dataset scale" className="border-y px-5 py-10 sm:px-8" style={{ borderColor: 'var(--border)', background: 'var(--surface-sunken)' }}>
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 sm:grid-cols-4">
+        {stats.map(({ label, value }) => (
+          <div key={label} className="text-center sm:text-left">
+            <span className="dataset-stat-value">{value}</span>
+            <div className="mt-1 text-[10.5px] font-medium ink-muted">{label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AppLink({ to, children, className = '', style, onClick }: { to: string; children: React.ReactNode; className?: string; style?: React.CSSProperties; onClick?: () => void }) {
   return <Link to={`/login?next=${encodeURIComponent(to)}`} className={className} style={style} onClick={onClick}>{children}</Link>;
 }
 
-function MetricValue({ value }: { value: number | null | undefined }) {
-  return <span>{fmtPct(value)}</span>;
-}
-
 export default function Landing() {
-  const [dataset, setDataset] = useState<DatasetResponse | null>(null);
-  const [datasetState, setDatasetState] = useState<'loading' | 'ready' | 'unavailable'>('loading');
-  const [datasetError, setDatasetError] = useState('');
+  const progressRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    api.getData().then((result) => {
-      if (!active) return;
-      setDataset(result);
-      setDatasetState('ready');
-    }).catch((error: unknown) => {
-      if (!active) return;
-      setDatasetState('unavailable');
-      setDatasetError(error instanceof Error ? error.message : 'Dataset request failed.');
+    const sections = document.querySelectorAll<HTMLElement>('.landing-page main > section');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion || !('IntersectionObserver' in window)) {
+      sections.forEach((section) => section.classList.add('landing-reveal', 'is-visible'));
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+    sections.forEach((section) => {
+      section.classList.add('landing-reveal');
+      observer.observe(section);
     });
-    return () => { active = false; };
+
+    return () => observer.disconnect();
   }, []);
 
-  function retryDataset() {
-    setDatasetState('loading');
-    setDatasetError('');
-    api.getData().then((result) => {
-      setDataset(result);
-      setDatasetState('ready');
-    }).catch((error: unknown) => {
-      setDatasetState('unavailable');
-      setDatasetError(error instanceof Error ? error.message : 'Dataset request failed.');
-    });
-  }
+  useEffect(() => {
+    const progress = progressRef.current;
+    if (!progress) return;
 
-  const metrics = dataset?.metrics ?? [];
-  const cagrValues = metrics.map((metric) => metric.cagr).filter((value): value is number => value != null);
-  const drawdowns = metrics.map((metric) => metric.max_drawdown).filter((value): value is number => value != null);
-  const averageCagr = cagrValues.length ? cagrValues.reduce((sum, value) => sum + value, 0) / cagrValues.length : null;
-  const worstDrawdown = drawdowns.length ? Math.min(...drawdowns) : null;
-  const schemeCount = new Set(metrics.map((metric) => metric.scheme_name)).size;
-  const categoryCount = new Set(metrics.map((metric) => metric.category)).size;
-  const navPointCount = dataset?.nav.length ?? 0;
-  const earliestDate = metrics.reduce<string | null>((earliest, metric) =>
-    !earliest || metric.start_date < earliest ? metric.start_date : earliest, null);
-  const latestDate = metrics.reduce<string | null>((latest, metric) =>
-    !latest || metric.end_date > latest ? metric.end_date : latest, null);
-  const yearsOfHistory = earliestDate && latestDate
-    ? Math.max(1, Math.floor((new Date(latestDate).getTime() - new Date(earliestDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
-    : null;
-  const previewScheme = metrics[0];
-  const previewNav = dataset?.nav
-    .filter((point) => point.scheme_code === previewScheme?.scheme_code)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-16) ?? [];
-  const navRange = previewNav.length
-    ? Math.max(...previewNav.map((point) => point.nav)) - Math.min(...previewNav.map((point) => point.nav))
-    : 0;
+    let frame = 0;
+    const updateProgress = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+        const amount = scrollable > 0 ? window.scrollY / scrollable : 0;
+        progress.style.setProperty('--scroll-progress', String(Math.min(1, Math.max(0, amount))));
+      });
+    };
+
+    updateProgress();
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress);
+    return () => {
+      window.removeEventListener('scroll', updateProgress);
+      window.removeEventListener('resize', updateProgress);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen overflow-hidden" style={{ background: 'var(--page-plane)', color: 'var(--text-primary)' }}>
+    <div className="landing-page min-h-screen overflow-hidden" style={{ background: 'var(--page-plane)', color: 'var(--text-primary)' }}>
+      <div className="landing-scroll-progress" ref={progressRef} aria-hidden="true" />
       <header className="sticky top-0 z-30 border-b backdrop-blur-xl"
         style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--page-plane) 92%, transparent)' }}>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-3.5 sm:px-8">
@@ -141,6 +158,7 @@ export default function Landing() {
             {PRIMARY_PAGES.map(([label, path]) => (
               <AppLink key={path} to={path} className="transition hover:text-white">{label}</AppLink>
             ))}
+            <a href="#ai-analysis" className="transition hover:text-white">AI analysis</a>
           </nav>
 
           <div className="hidden items-center gap-2.5 lg:flex">
@@ -164,6 +182,7 @@ export default function Landing() {
               {PRIMARY_PAGES.map(([label, path]) => (
                 <AppLink key={path} to={path} onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm ink-secondary hover:bg-white/5">{label}</AppLink>
               ))}
+              <a href="#ai-analysis" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm ink-secondary hover:bg-white/5">AI analysis</a>
               <Link to="/login" onClick={() => setMenuOpen(false)} className="rounded-lg px-3 py-2.5 text-sm font-semibold ink-brand">Sign in / Get started</Link>
             </div>
           </nav>
@@ -171,9 +190,8 @@ export default function Landing() {
       </header>
 
       <main id="home">
-        <section className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pb-20 pt-16 sm:px-8 sm:pt-24 lg:grid-cols-[1.03fr_.97fr] lg:gap-16 lg:pb-28">
-          <div className="pointer-events-none absolute -left-64 -top-56 h-[560px] w-[560px] rounded-full opacity-20 blur-3xl"
-            style={{ background: 'radial-gradient(circle,var(--brand) 0%,transparent 68%)' }} />
+        <section className="landing-hero relative mx-auto grid max-w-7xl items-center gap-12 px-5 pb-8 pt-16 sm:px-8 sm:pb-10 sm:pt-24 lg:grid-cols-[1.03fr_.97fr] lg:gap-16">
+          <div className="landing-aurora" />
           <div className="relative z-10">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-wide"
               style={{ borderColor: 'var(--brand-surface-strong)', background: 'var(--brand-surface)', color: 'var(--brand-ink)' }}>
@@ -205,106 +223,12 @@ export default function Landing() {
             </div>
           </div>
 
-          <section aria-label="Live project dataset preview" className="relative z-10 rounded-2xl border p-3 shadow-2xl sm:p-4"
-            style={{ borderColor: 'var(--border-strong)', background: 'linear-gradient(150deg,var(--surface),var(--surface-sunken))', boxShadow: 'var(--shadow-preview)' }}>
-            <div className="flex items-center justify-between gap-3 border-b px-2 pb-3" style={{ borderColor: 'var(--border)' }}>
-              <div>
-                <div className="text-[12px] font-semibold ink-primary">Dataset snapshot</div>
-                <div className="mt-1 text-[10px] ink-muted">Values are calculated from the dataset returned by the project API</div>
-              </div>
-              <span className="rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider"
-                style={{ borderColor: dataset?.synthetic ? 'color-mix(in srgb, var(--status-warning) 24%, transparent)' : 'color-mix(in srgb, var(--status-good) 20%, transparent)', background: dataset?.synthetic ? 'var(--status-warning-surface)' : 'var(--status-good-surface)', color: dataset?.synthetic ? 'var(--status-warning)' : 'var(--brand-ink)' }}>
-                {datasetState === 'loading' ? 'Connecting' : datasetState === 'unavailable' ? 'Offline' : dataset?.synthetic ? 'Synthetic demo' : 'Historical data'}
-              </span>
-            </div>
-
-            {datasetState === 'ready' && metrics.length > 0 ? (
-              <>
-                <div className="grid grid-cols-3 gap-2.5 py-4">
-                  {[
-                    ['Average CAGR', <MetricValue key="cagr" value={averageCagr} />],
-                    ['Worst drawdown', <MetricValue key="drawdown" value={worstDrawdown} />],
-                    ['Schemes', String(schemeCount)],
-                  ].map(([label, value]) => (
-                    <div key={String(label)} className="rounded-xl border p-3" style={{ borderColor: 'var(--border)', background: 'var(--surface-sunken)' }}>
-                      <div className="text-[9.5px] ink-muted">{label}</div>
-                      <div className="mt-1 text-[15px] font-bold tabular ink-primary">{value}</div>
-                    </div>
-                  ))}
-                </div>
-                <p className="mb-3 text-[9px] leading-relaxed ink-muted">
-                  CAGR and drawdown use each scheme's full available period; ranges may differ.
-                </p>
-                <div className="rounded-xl border p-3.5" style={{ borderColor: 'var(--border)', background: 'var(--surface-sunken)' }}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-[11px] font-semibold ink-primary">NAV history</div>
-                      <div className="mt-1 max-w-[240px] truncate text-[9px] ink-muted">{previewScheme?.scheme_name ?? 'No scheme selected'}</div>
-                    </div>
-                    <span className="text-right text-[9px] ink-muted">
-                      {previewNav.length ? `${previewNav.length} points · ${previewNav[0].date} – ${previewNav[previewNav.length - 1].date}` : 'No history available'}
-                    </span>
-                  </div>
-                  {previewNav.length > 1 ? (
-                    <div className="mt-4 flex h-28 items-end gap-1" role="img" aria-label={`Historical NAV bar chart for ${previewScheme?.scheme_name}`}>
-                      {previewNav.map((point) => {
-                        const percent = navRange > 0 ? ((point.nav - Math.min(...previewNav.map((item) => item.nav))) / navRange) : 0.5;
-                        return <div key={`${point.date}-${point.scheme_code}`} title={`${point.date}: ${point.nav.toFixed(4)}`}
-                          className="min-w-0 flex-1 rounded-t-sm transition hover:opacity-80"
-                          style={{ height: `${24 + percent * 76}%`, background: 'linear-gradient(180deg,var(--brand-ink),var(--brand))' }} />;
-                      })}
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex h-28 items-center justify-center rounded-lg border border-dashed px-5 text-center text-[11px] ink-muted"
-                      style={{ borderColor: 'var(--border-strong)' }}>
-                      The API did not return enough history to draw a chart.
-                    </div>
-                  )}
-                  {previewNav.length > 0 && (
-                    <div className="mt-2 flex justify-between text-[9px] ink-muted">
-                      <span>{previewNav[0].date}</span><span>{previewNav[previewNav.length - 1].date}</span>
-                    </div>
-                  )}
-                </div>
-                {dataset?.synthetic && <div className="mt-3"><SyntheticDataBanner /></div>}
-              </>
-            ) : datasetState === 'loading' ? (
-              <div className="my-4"><LoadingState label="Connecting to the protected dataset" /></div>
-            ) : datasetState === 'unavailable' ? (
-              <div className="my-4">
-                <ErrorState
-                  title="Dataset preview unavailable"
-                  detail={`The dataset API is protected and may be offline (${datasetError}). Sign in to the workspace or retry the request.`}
-                  onRetry={retryDataset}
-                />
-              </div>
-            ) : (
-              <div className="my-4">
-                <EmptyState
-                  title="No processed data"
-                  detail="The project API returned no fund metrics to preview. Sign in to inspect the workspace."
-                  action={<AppLink to="/app/overview" className="btn btn-secondary btn-sm">Open Overview</AppLink>}
-                />
-              </div>
-            )}
-          </section>
+          <HeroMarketFlipCard />
         </section>
 
-        <section aria-label="Dataset scale" className="border-y px-5 py-10 sm:px-8" style={{ borderColor: 'var(--border)', background: 'var(--surface-sunken)' }}>
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-6 sm:grid-cols-4">
-            {[
-              ['Tracked schemes', schemeCount > 0 ? `${schemeCount}` : '—'],
-              ['NAV data points', navPointCount > 0 ? navPointCount.toLocaleString('en-IN') : '—'],
-              ['Fund categories', categoryCount > 0 ? `${categoryCount}` : '—'],
-              ['Years of history', yearsOfHistory ? `${yearsOfHistory}+` : '—'],
-            ].map(([label, value]) => (
-              <div key={label} className="text-center sm:text-left">
-                <div className="text-[26px] font-bold tabular tracking-tight ink-primary sm:text-[32px]">{value}</div>
-                <div className="mt-1 text-[10.5px] font-medium ink-muted">{label}</div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <PortfolioShowcase />
+
+        <DatasetScaleStats />
 
         <section aria-label="Historical market data visualization" className="mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[1fr_1.1fr] lg:py-24">
           <div className="order-2 lg:order-1">
@@ -348,6 +272,34 @@ export default function Landing() {
                   <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-semibold ink-brand">Explore <ChevronRight size={13} className="transition group-hover:translate-x-0.5" /></span>
                 </AppLink>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="ai-analysis" className="ai-analysis-section px-5 py-16 sm:px-8 sm:py-20" aria-labelledby="ai-analysis-title">
+          <div className="ai-analysis-grid mx-auto max-w-6xl">
+            <div>
+              <div className="ai-analysis-banner"><Sparkles size={15} /> AI POWERED ANALYSIS</div>
+              <h2 id="ai-analysis-title" className="mt-5 text-3xl font-bold tracking-tight sm:text-[38px]">AI-powered analysis</h2>
+              <p className="mt-4 max-w-xl text-sm leading-7 ink-secondary">
+                Ask questions about the project’s mutual-fund dataset and explore concise insights grounded in its available fund metrics. When an AI provider is not configured or available, a rule-based fallback can still provide basic descriptive insights.
+              </p>
+              <p className="mt-3 max-w-xl text-[11px] leading-6 ink-muted">
+                Responses describe historical data; they are not investment advice, recommendations, or predictions. The conversation shown here is a static example, not a live analysis.
+              </p>
+              <AppLink to="/app/overview" className="brand-cta mt-6 inline-flex items-center gap-2 rounded-lg px-5 py-3 text-[12px] font-bold">
+                <MessageCircle size={15} /> Explore the workspace <ArrowRight size={14} />
+              </AppLink>
+            </div>
+            <div className="ai-example-card" aria-label="Static AI chat example">
+              <div className="ai-example-label"><Sparkles size={13} className="mr-1 inline" /> Example · static preview</div>
+              <div className="ai-chat-bubble ai-chat-question">
+                What should I keep in mind when comparing these funds?
+              </div>
+              <div className="ai-chat-bubble ai-chat-answer">
+                Compare each fund over the dates available for both it and its benchmark. The observed periods can differ across schemes, and historical returns and risk measures do not predict future performance.
+              </div>
+              <p className="ai-chat-note">Illustrative example only · no API request is made</p>
             </div>
           </div>
         </section>
