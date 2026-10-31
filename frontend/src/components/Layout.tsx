@@ -6,6 +6,7 @@ import { api, type DatasetResponse } from '../api';
 import { NAV_ITEMS } from '../navigation';
 import { ErrorState, SyntheticDataBanner } from './DataState';
 import TopNav from './TopNav';
+import ChatWidget from './ChatWidget';
 
 type DataState = 'loading' | 'ready' | 'error';
 
@@ -155,6 +156,7 @@ export default function Layout() {
           {data?.synthetic && <div className="mb-5"><SyntheticDataBanner /></div>}
           <Outlet context={{ data, dataState, reload: reloadData, user }} />
         </main>
+        <ChatWidget />
       </div>
     </div>
   );
