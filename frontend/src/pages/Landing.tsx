@@ -416,6 +416,8 @@ export default function Landing() {
             </nav>
             <nav aria-label="Footer: about" className="flex flex-col items-start gap-2.5 text-[11px] ink-secondary">
               <span className="mb-1 text-[10px] font-bold uppercase tracking-widest ink-primary">About</span>
+              <Link to="/privacy" className="hover:text-white">Privacy</Link>
+              <Link to="/terms" className="hover:text-white">Terms</Link>
               <a href="#data-and-privacy" className="hover:text-white">Data & privacy</a>
               <a href="#disclaimer" className="hover:text-white">Disclaimer</a>
             </nav>

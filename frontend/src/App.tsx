@@ -6,6 +6,8 @@ import Layout from './components/Layout';
 
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const Terms = lazy(() => import('./pages/Terms'));
 const Overview = lazy(() => import('./pages/Overview'));
 const ExploreFunds = lazy(() => import('./pages/ExploreFunds'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
@@ -40,6 +42,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/app" element={<ProtectedLayout />}>
               <Route index element={<Navigate to="overview" replace />} />
               <Route path="overview" element={<Overview />} />
