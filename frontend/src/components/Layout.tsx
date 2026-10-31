@@ -7,6 +7,7 @@ import { NAV_ITEMS } from '../navigation';
 import { ErrorState, SyntheticDataBanner } from './DataState';
 import TopNav from './TopNav';
 import ChatWidget from './ChatWidget';
+import BrandLogo from './BrandLogo';
 
 type DataState = 'loading' | 'ready' | 'error';
 
@@ -65,12 +66,7 @@ export default function Layout() {
         aria-label="Main sidebar"
       >
         <a href="/" className="flex h-[72px] items-center gap-3 border-b px-5" style={{ borderColor: 'var(--border)' }}>
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ink-on-brand"
-            style={{ background: 'linear-gradient(145deg,var(--brand-ink),var(--brand))' }}
-          >
-            <span className="text-[17px] font-black">F</span>
-          </span>
+          <BrandLogo />
           <span className="text-[14px] font-extrabold tracking-tight ink-primary">
             FundScope <span style={{ color: 'var(--brand-ink)' }}>India</span>
           </span>

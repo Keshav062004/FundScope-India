@@ -5,6 +5,7 @@ import {
   LineChart, Menu, MessageCircle, ShieldCheck, Sparkles, TrendingUp, Wallet, X,
 } from 'lucide-react';
 import FAQ, { type FAQItem } from '../components/FAQ';
+import BrandLogo from '../components/BrandLogo';
 import HeroMarketFlipCard from '../components/HeroMarketFlipCard';
 import MarketArt from '../components/MarketArt';
 import PortfolioShowcase from '../components/PortfolioShowcase';
@@ -147,10 +148,7 @@ export default function Landing() {
         style={{ borderColor: 'var(--border)', background: 'color-mix(in srgb, var(--page-plane) 92%, transparent)' }}>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-3.5 sm:px-8">
           <a href="#home" className="flex items-center gap-2.5" aria-label="FundScope India home">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl ink-on-brand"
-              style={{ background: 'linear-gradient(145deg,var(--brand-ink),var(--brand))' }}>
-              <BarChart3 size={19} strokeWidth={2.5} />
-            </span>
+            <BrandLogo />
             <span className="text-[15px] font-extrabold tracking-tight">FundScope <span style={{ color: 'var(--brand-ink)' }}>India</span></span>
           </a>
 
